@@ -25,7 +25,7 @@ $(shared_dir):
 .PHONY: build
 build:
 	docker build \
-		--label $(label) -t $(image_tag) -f $(dockerfile) .
+		--label $(label) -t $(image_tag) -f $(dockerfile) /var/empty
 
 .PHONY: run
 run: build | $(shared_dir)
