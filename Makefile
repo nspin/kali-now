@@ -1,9 +1,7 @@
-universal_name := kali-now-demo
+id := kali-now
 
-label := $(universal_name)
-image_repository := $(universal_name)
-image_tag := $(image_repository)
-container_name := $(universal_name)
+image_tag := $(id)
+container_name := $(id)
 dockerfile := Dockerfile
 
 shared_dir := shared
@@ -25,11 +23,11 @@ $(shared_dir):
 .PHONY: build
 build:
 	docker build \
-		--label $(label) -t $(image_tag) -f $(dockerfile) /var/empty
+		-t $(image_tag) -f $(dockerfile) /var/empty
 
 .PHONY: run
 run: build | $(shared_dir)
-	docker run -d -it --name $(container_name) --label $(label) \
+	docker run -d -it --name $(container_name) \
 		--cap-add=NET_ADMIN \
 		--tmpfs /tmp \
 		--device /dev/kvm \
