@@ -262,4 +262,11 @@ in rec {
     ];
   };
   y = x.config.system.build.toplevel;
+  z = pkgs.writeScript "x.sh" ''
+    #!${pkgs.runtimeShell}
+    # rm -r /etc
+    # ${pkgs.coreutils}/bin/cp -r ${y}/etc/* /etc
+    # ${pkgs.coreutils}/bin/mkdir -p /run/wrappers
+    exec ${y}/init  
+  '';
 }

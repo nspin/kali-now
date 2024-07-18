@@ -47,6 +47,19 @@ run: build | $(shared_dir)
 		$(image_tag) \
 		$(entry_script_fragment)
 
+.PHONY: r
+r: build | $(shared_dir)
+	docker run --rm -it \
+		--privileged \
+		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
+		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
+		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
+		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
+		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
+		--env DISPLAY \
+		$(image_tag) \
+		$$(nix-build nix -A y)/init
+
 .PHONY: exec
 exec:
 	docker exec -it \
