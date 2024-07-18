@@ -169,6 +169,7 @@ let
             usermod -aG $group x
           fi
         }
+
         ensure_group kvm $KVM_GID
         if [ -n "''${AUDIO_GID+x}" ]; then
           ensure_group audio $AUDIO_GID
