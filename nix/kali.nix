@@ -4,7 +4,9 @@
 , qemu, libvirt, virt-manager, spice-gtk, libguestfs-with-appliance, dnsmasq
 , gosu, xauth, dockerTools
 , coreutils, gnugrep, gnused, iproute2, iptables
+, libcap
 , bashInteractive
+, polkit
 , pkgs
 }:
 
@@ -139,6 +141,9 @@ let
           iproute2 iptables
           gnugrep gnused
           qemu
+          spice-gtk
+          libcap
+          pkgs.strace
         ];
       };
 
@@ -147,6 +152,9 @@ let
         set -eu
 
         export PATH=${entryScriptEnv}/bin:$PATH
+
+        mkdir -p /run/current-system
+        ln -s ${entryScriptEnv} /run/current-system/sw
 
         # validate and process input
         : "''${HOST_GID:=100}"
@@ -194,14 +202,23 @@ let
         setuid_wrappers_dir=/run/wrappers/bin
         mkdir -p $setuid_wrappers_dir
 
-        cp ${qemu}/libexec/qemu-bridge-helper $setuid_wrappers_dir
-        cp ${spice-gtk}/bin/spice-client-glib-usb-acl-helper $setuid_wrappers_dir
+        cp ${polkit.out}/lib/polkit-1/polkit-agent-helper-1 $setuid_wrappers_dir
+        chmod u+s $setuid_wrappers_dir/polkit-agent-helper-1
 
-        chmod u+s $setuid_wrappers_dir/*
+        cp ${qemu}/libexec/qemu-bridge-helper $setuid_wrappers_dir
+        chmod u+s $setuid_wrappers_dir/qemu-bridge-helper
+
+        cp ${spice-gtk}/bin/spice-client-glib-usb-acl-helper $setuid_wrappers_dir
+        setcap cap_setpcap,cap_fowner+ep $setuid_wrappers_dir/spice-client-glib-usb-acl-helper
+        # chmod u+s $setuid_wrappers_dir/spice-client-glib-usb-acl-helper
+
         export PATH=$setuid_wrappers_dir:$PATH
 
         mkdir -p /etc/qemu
         touch /etc/qemu/bridge.conf
+
+        mkdir -p /var/log/libvirt/qemu
+        chmod a+rwx /var/log/libvirt/qemu
 
         br_addr="192.168.122.1"
         br_dev="vbr0"
@@ -215,6 +232,9 @@ let
 
         mkdir -p /var/run # for /var/run/dnsmasq.pid
         mkdir -p /var/lib/misc # /var/lib/misc/dnsmasq.leases
+
+        mkdir -p /etc/polkit-1/rules.d
+        cp ${p} /etc/polkit-1/rules.d/x.rules
 
         mkdir -p /etc/nix
         ln -s ${./nix.conf} /etc/nix/nix.conf
@@ -248,11 +268,39 @@ let
         virsh_c net-start kali-network
         virsh_c define ${vmXml}
 
+        mkdir -p ~/.config/libvirt
+        cp ${c} ~/.config/libvirt/libvirtd.conf
+        cp ${c} ~/.config/libvirt/virtqemud.conf
+
+        LIBVIRTD_ARGS="--config ${c}" \
         XAUTHORITY=${xauthorityPath} \
-          ${virt-manager}/bin/virt-manager -c qemu:///session
+          echo ${virt-manager}/bin/virt-manager -c qemu:///session --debug
 
         echo "Initialization complete. Sleeping..."
         sleep inf
+      '';
+
+      p = writeText "x.rules" ''
+        polkit.addRule(function(action, subject) {
+          return polkit.Result.YES;
+        });
+
+        polkit.addRule(function(action, subject) {
+          if (action.id == "org.spice-space.lowlevelusbaccess") {
+            return polkit.Result.YES;
+          }
+        });
+
+        polkit.addRule(function(action, subject) {
+          polkit.log("action=" + action);
+          polkit.log("subject=" + subject);
+        });
+      '';
+
+      c = writeText "libvirtd.conf" ''
+        foo
+        log_filters="3:remote 4:event 3:util.json 3:rpc 1:*"
+        log_outputs="1:file:/home/x/xxxx.log"
       '';
 
     in {
