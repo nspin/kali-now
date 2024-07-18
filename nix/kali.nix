@@ -1,7 +1,7 @@
 { stdenv, lib, runCommand, writeText, writeScript, writeScriptBin, runtimeShell, buildEnv
 , fetchurl
 , nix, cacert
-, qemu, libvirt, virt-manager, libguestfs-with-appliance, dnsmasq
+, qemu, libvirt, virt-manager, spice-gtk, libguestfs-with-appliance, dnsmasq
 , gosu, xauth, dockerTools
 , coreutils, gnugrep, gnused, iproute2, iptables
 , bashInteractive
@@ -190,9 +190,15 @@ let
 
         ensure_user_dir ${runtimeImageDirectory}
 
-        mkdir -p /run/wrappers/bin
-        cp ${qemu}/libexec/qemu-bridge-helper /run/wrappers/bin
-        chmod u+s /run/wrappers/bin/qemu-bridge-helper
+        setuid_wrappers_dir=/run/wrappers/bin
+        mkdir -p $setuid_wrappers_dir
+
+        cp ${qemu}/libexec/qemu-bridge-helper $setuid_wrappers_dir
+        cp ${spice-gtk}/bin/spice-client-glib-usb-acl-helper $setuid_wrappers_dir
+
+        chmod u+s $setuid_wrappers_dir/*
+        export PATH=$setuid_wrappers_dir:$PATH
+
         mkdir -p /etc/qemu
         touch /etc/qemu/bridge.conf
 
@@ -241,7 +247,8 @@ let
         virsh_c net-start kali-network
         virsh_c define ${vmXml}
 
-        XAUTHORITY=${xauthorityPath} ${virt-manager}/bin/virt-manager -c qemu:///session
+        XAUTHORITY=${xauthorityPath} \
+          ${virt-manager}/bin/virt-manager -c qemu:///session
 
         echo "Initialization complete. Sleeping..."
         sleep inf
