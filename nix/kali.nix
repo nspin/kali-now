@@ -252,7 +252,14 @@ let
       inherit entryScript interactScript;
     };
 
-in {
+in rec {
   inherit images scripts;
   inherit (scripts) entryScript interactScript;
+
+  x = import (pkgs.path + "/nixos") {
+    configuration.imports = [
+      ./config.nix
+    ];
+  };
+  y = x.config.system.build.toplevel;
 }
