@@ -33,7 +33,7 @@
   <devices>
     <disk type="file" device="disk">
       <driver name="qemu" type="qcow2" discard="unmap"/>
-      <source file="@runtimeImagePath@"/>
+      <source file="@runtimeDiskPath@"/>
       <target dev="vda" bus="virtio"/>
       <address type="pci" domain="0x0000" bus="0x04" slot="0x00" function="0x0"/>
     </disk>
