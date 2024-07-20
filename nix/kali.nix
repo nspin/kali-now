@@ -263,23 +263,4 @@ in rec {
   };
 
   inherit (nixos.config.system.build) containerInit;
-
-  # z = pkgs.writeScript "x.sh" ''
-  #   #!${pkgs.runtimeShell}
-
-  #   # rm -r /etc
-  #   echo YYY
-  #   ${pkgs.findutils}/bin/find etc
-  #   ${pkgs.findutils}/bin/find tmp
-  #   # ${pkgs.coreutils}/bin/cp -r ${y}/etc/* /etc
-  #   ${pkgs.coreutils}/bin/ls
-  #   # ${pkgs.coreutils}/bin/mkdir -p /run/wrappers
-  #   ${pkgs.coreutils}/bin/env
-  #   echo XXX
-  #   echo zzz $$
-  #   ${pkgs.bash}/bin/bash -c "echo yyy $$"
-  #   ${pkgs.coreutils}/bin/env -i ${pkgs.bash}/bin/bash -c "echo xxx $$"
-  #   exit
-  #   exec ${y}/init  
-  # '';
 }
