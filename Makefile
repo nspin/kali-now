@@ -52,6 +52,7 @@ r: build | $(shared_dir)
 	docker run --rm -it \
 		--name $(container_name) \
 		--privileged \
+		--tmpfs /tmp \
 		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
@@ -59,7 +60,7 @@ r: build | $(shared_dir)
 		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
 		--env DISPLAY \
 		$(image_tag) \
-		$$(nix-build nix -A y)/init
+		$$(nix-build nix -A containerInit)
 
 .PHONY: exec
 exec:

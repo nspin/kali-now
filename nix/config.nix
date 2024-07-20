@@ -5,8 +5,7 @@ let
 in {
   imports = [
     "${modulesPath}/profiles/minimal.nix"
-    # "${modulesPath}/profiles/perlless.nix"
-    # "${modulesPath}/profiles/headless.nix"
+    "${modulesPath}/profiles/headless.nix"
   ];
 
   config = {
@@ -28,5 +27,13 @@ in {
       password = "";
       extraGroups = [ "wheel" ];
     };
+
+    system.build.containerInit = pkgs.writeScript "x.sh" ''
+      #!${pkgs.runtimeShell}
+      ${pkgs.coreutils}/bin/mkdir /container-init
+      ${pkgs.coreutils}/bin/cp -r /etc /container-init
+      ${pkgs.coreutils}/bin/env > /container-init/env.txt
+      exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
+    '';
   };
 }
