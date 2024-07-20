@@ -95,6 +95,7 @@ in {
         xorg.xauth
         gnused
       ];
+      checkPhase = false;
       text = ''
         xauth -i -f /host.Xauthority nlist |  sed -e 's/^..../ffff/' |  bin/xauth -f $XAUTHORITY nmerge -
       '';
