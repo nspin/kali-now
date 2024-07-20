@@ -36,6 +36,7 @@ in {
 
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
+      "vbr0"
     ];
 
     programs.virt-manager.enable = true;
