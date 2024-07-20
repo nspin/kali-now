@@ -10,6 +10,9 @@ in {
   ];
 
   config = {
+
+    networking.resolvconf.enable = false;
+    # networking.useHostResolvConf = true;
   
     # avoid rebuilds
     # environment.noXlibs = false;
