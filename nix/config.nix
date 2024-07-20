@@ -9,28 +9,22 @@ in {
   ];
 
   config = {
-
+  
     # avoid rebuilds
     environment.noXlibs = false;
+
+    system.stateVersion = config.system.nixos.release;
 
     boot.isContainer = true;
     nix.enable = false;
     networking.firewall.enable = false;
-    users.mutableUsers = false;
 
-    system.stateVersion = config.system.nixos.release;
+    security.sudo.wheelNeedsPassword = false;
+    # users.mutableUsers = false;
+    # users.allowNoPasswordLogin = true;
 
     # services.getty.autologinUser = "root";
     services.getty.autologinUser = "x";
-
-    security.sudo.wheelNeedsPassword = false;
-
-    users.extraUsers.x = {
-      uid = 1000;
-      isNormalUser = true;
-      password = "";
-      extraGroups = [ "wheel" ];
-    };
 
     system.build.containerInit = pkgs.writeScript "x.sh" ''
       #!${pkgs.runtimeShell}
@@ -45,6 +39,23 @@ in {
     ];
 
     programs.virt-manager.enable = true;
+
+    ids.uids.qemu-libvirtd = lib.mkForce 1000;
+    users.users.qemu-libvirtd.isSystemUser = true;
+
+    users.users.x = {
+      # uid = 1000;
+      isNormalUser = true;
+      # password = "";
+      extraGroups = [ "wheel" ];
+    };
+
+    # users.users.x = {
+    #   # uid = 1000;
+    #   isNormalUser = true;
+    #   # password = "";
+    #   extraGroups = [ "wheel" ];
+    # };
 
     services.dnsmasq = lib.optionalAttrs false {
       enable = true;
