@@ -15,8 +15,6 @@ in {
     nix.enable = false;
     networking.firewall.enable = false;
 
-    # system.switch.enable = false;
-
     system.stateVersion = "24.11";
 
     # services.getty.autologinUser = "root";
