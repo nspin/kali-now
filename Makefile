@@ -50,6 +50,7 @@ run: build | $(shared_dir)
 .PHONY: r
 r: build | $(shared_dir)
 	docker run --rm -it \
+		--name $(container_name) \
 		--privileged \
 		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \

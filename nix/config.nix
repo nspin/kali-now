@@ -11,11 +11,24 @@ in {
 
   config = {
     boot.isContainer = true;
+    users.mutableUsers = false;
     nix.enable = false;
+    networking.firewall.enable = false;
+
     # system.switch.enable = false;
-    # users.mutableUsers = false;
+
     system.stateVersion = "24.11";
 
-    services.getty.autologinUser = "root";
+    # services.getty.autologinUser = "root";
+    services.getty.autologinUser = "x";
+
+    security.sudo.wheelNeedsPassword = false;
+
+    users.extraUsers.x = {
+      uid = 1000;
+      isNormalUser = true;
+      password = "";
+      extraGroups = [ "wheel" ];
+    };
   };
 }
