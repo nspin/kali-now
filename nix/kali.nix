@@ -268,4 +268,5 @@ in rec {
   };
 
   inherit (nixos.config.system.build) containerInit;
+  inherit (nixos.config.system.build) toplevel;
 }

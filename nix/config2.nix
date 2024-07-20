@@ -5,22 +5,24 @@ let
 
 in {
   imports = [
+    # "${modulesPath}/profiles/docker-container.nix"
+    "${modulesPath}/virtualisation/docker-image.nix"
     # "${modulesPath}/profiles/minimal.nix"
     # "${modulesPath}/profiles/headless.nix"
   ];
 
   config = {
 
-    networking.resolvconf.enable = false;
+    # networking.resolvconf.enable = false;
     # networking.useHostResolvConf = true;
   
     # avoid rebuilds
     # environment.noXlibs = false;
 
-    system.stateVersion = config.system.nixos.release;
+    # system.stateVersion = config.system.nixos.release;
 
-    boot.isContainer = true;
-    nix.enable = false;
+    # boot.isContainer = true;
+    # nix.enable = false;
 
     services.getty.autologinUser = "root";
 
@@ -35,13 +37,13 @@ in {
     # # services.getty.autologinUser = "root";
     # services.getty.autologinUser = "x";
 
-    system.build.containerInit = pkgs.writeScript "x.sh" ''
-      #!${pkgs.runtimeShell}
-      ${pkgs.coreutils}/bin/mkdir /container-init
-      ${pkgs.coreutils}/bin/cp -r /etc /container-init
-      ${pkgs.coreutils}/bin/env > /container-init/env.txt
-      exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
-    '';
+    # system.build.containerInit = pkgs.writeScript "x.sh" ''
+    #   #!${pkgs.runtimeShell}
+    #   ${pkgs.coreutils}/bin/mkdir /container-init
+    #   ${pkgs.coreutils}/bin/cp -r /etc /container-init
+    #   ${pkgs.coreutils}/bin/env > /container-init/env.txt
+    #   exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
+    # '';
 
     # virtualisation.libvirtd.enable = true;
     # virtualisation.libvirtd.allowedBridges = [

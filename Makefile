@@ -65,7 +65,7 @@ r: build | $(shared_dir)
 		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
 		--env DISPLAY \
 		$(image_tag) \
-		$$(nix-build nix -A containerInit)
+		$$(nix-build nix -A toplevel)/init
 
 .PHONY: exec
 exec:
