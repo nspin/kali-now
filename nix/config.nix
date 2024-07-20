@@ -9,6 +9,10 @@ in {
   ];
 
   config = {
+
+    # avoid rebuilds
+    environment.noXlibs = false;
+
     boot.isContainer = true;
     nix.enable = false;
     networking.firewall.enable = false;
