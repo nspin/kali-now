@@ -59,7 +59,7 @@ in {
     #   extraGroups = [ "wheel" ];
     # };
 
-    services.dnsmasq = lib.optionalAttrs false {
+    services.dnsmasq = {
       enable = true;
       resolveLocalQueries = false;
       settings = {
