@@ -42,14 +42,14 @@ in {
 
     programs.virt-manager.enable = true;
 
-    services.dnsmasq = {
+    services.dnsmasq = lib.optionalAttrs false {
       enable = true;
       resolveLocalQueries = false;
       settings = {
         strict-order = true;
         except-interface = "lo";
         bind-dynamic = true;
-        interface = vbr0;
+        interface = "vbr0";
         dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0";
         dhcp-no-override = true;
         dhcp-authoritative = true;
