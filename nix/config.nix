@@ -41,11 +41,11 @@ in {
 
     programs.virt-manager.enable = true;
 
-    ids.uids.qemu-libvirtd = lib.mkForce 1000;
-    users.users.qemu-libvirtd.isSystemUser = true;
+    # ids.uids.qemu-libvirtd = lib.mkForce 1000;
+    # users.users.qemu-libvirtd.isSystemUser = true;
 
     users.users.x = {
-      # uid = 1000;
+      uid = 1000;
       isNormalUser = true;
       # password = "";
       extraGroups = [ "wheel" ];
@@ -98,7 +98,7 @@ in {
       checkPhase = false;
       text = ''
         touch $XAUTHORITY
-        sudo xauth -i -f /host.Xauthority nlist | sed -e 's/^..../ffff/' | xauth -f $XAUTHORITY nmerge -
+        xauth -i -f /host.Xauthority nlist | sed -e 's/^..../ffff/' | xauth -f $XAUTHORITY nmerge -
       '';
     };
 
