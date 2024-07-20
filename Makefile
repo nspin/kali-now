@@ -51,13 +51,18 @@ run: build | $(shared_dir)
 r: build | $(shared_dir)
 	docker run --rm -it \
 		--name $(container_name) \
+		--cap-add=NET_ADMIN \
 		--privileged \
 		--tmpfs /tmp \
+		--device /dev/kvm \
+		--device /dev/net/tun \
+		--device /dev/snd \
 		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
 		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
 		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
+		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
 		--env DISPLAY \
 		$(image_tag) \
 		$$(nix-build nix -A containerInit)

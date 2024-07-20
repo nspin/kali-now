@@ -1,6 +1,7 @@
 { lib, config, pkgs, modulesPath, ... }:
 
 let
+  inherit (config.system.build) theseImages;
 
 in {
   imports = [
@@ -82,12 +83,58 @@ in {
     };
 
     environment.systemPackages = [
+      pkgs.qemu
+      pkgs.libvirt
       config.system.build.refreshXauthority
       config.system.build.run
+      config.system.build.xsetup
     ];
 
     environment.sessionVariables = {
         XAUTHORITY = "$HOME/.Xauthority";
+    };
+
+    system.build.xsetup = with theseImages; pkgs.writeShellApplication {
+      name = "xsetup";
+      runtimeInputs = with pkgs; [
+        qemu
+        libvirt
+      ];
+      checkPhase = false;
+      text = ''
+        ensure_user_dir() {
+          if [ ! -d $1 ]; then
+            sudo mkdir -p $1
+            sudo chown x:x $1
+          fi
+        }
+
+        shared_base=/shared
+        shared_dirs="$shared_base/container $shared_base/vm"
+        ensure_user_dir $shared_base
+        for d in $shared_dirs; do
+          ensure_user_dir $d
+        done
+
+        ensure_user_dir ${runtimeImageDirectory}
+
+        ensure_image() {
+          if [ ! -f ${runtimeImageDirectory}/$2 ]; then
+            qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=$1 ${runtimeImageDirectory}/$2
+          fi
+        }
+
+        ensure_image ${vmQcow2} vm.qcow2
+
+        virsh_c() {
+          virsh -c qemu:///session "$@"
+        }
+
+        virsh_c net-define ${networkXml}
+        virsh_c net-autostart kali-network
+        virsh_c net-start kali-network
+        virsh_c define ${vmXml}
+      '';
     };
 
     system.build.refreshXauthority = pkgs.writeShellApplication {
@@ -108,7 +155,7 @@ in {
       checkPhase = false;
       text = ''
         refresh-xauthority
-        env $(cat /container-init/env.txt | grep DISPLAY) virt-manager
+        env $(cat /container-init/env.txt | grep DISPLAY) virt-manager -c qemu:///session
       '';
     };
 

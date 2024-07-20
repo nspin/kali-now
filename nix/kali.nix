@@ -78,6 +78,7 @@ let
     in {
       inherit iso;
       inherit vmQcow2 vmXml networkXml;
+      inherit runtimeImageDirectory;
     };
 
   scripts = with images;
@@ -259,6 +260,9 @@ in rec {
   nixos = import (pkgs.path + "/nixos") {
     configuration.imports = [
       ./config.nix
+      {
+        config.system.build.theseImages = images;
+      }
     ];
   };
 
