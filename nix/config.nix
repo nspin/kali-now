@@ -18,8 +18,6 @@ in {
     networking.firewall.enable = false;
     users.mutableUsers = false;
 
-    system.stateVersion = "24.11";
-
     # services.getty.autologinUser = "root";
     services.getty.autologinUser = "x";
 
