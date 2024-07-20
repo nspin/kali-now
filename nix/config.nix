@@ -97,7 +97,8 @@ in {
       ];
       checkPhase = false;
       text = ''
-        xauth -i -f /host.Xauthority nlist |  sed -e 's/^..../ffff/' |  bin/xauth -f $XAUTHORITY nmerge -
+        touch $XAUTHORITY
+        sudo xauth -i -f /host.Xauthority nlist | sed -e 's/^..../ffff/' | xauth -f $XAUTHORITY nmerge -
       '';
     };
 
