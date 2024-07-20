@@ -19,6 +19,8 @@ in {
     boot.isContainer = true;
     nix.enable = false;
     networking.firewall.enable = false;
+    networking.firewall.logRefusedPackets = true;
+    networking.firewall.allowedUDPPorts = [ 53 67 ];
 
     security.sudo.wheelNeedsPassword = false;
     # users.mutableUsers = false;
