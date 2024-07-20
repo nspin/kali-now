@@ -82,7 +82,7 @@ in {
     };
 
     environment.systemPackages = [
-      system.build.refreshXauthority
+      config.system.build.refreshXauthority
     ];
 
     environment.sessionVariables = {
@@ -92,7 +92,7 @@ in {
     system.build.refreshXauthority = pkgs.writeShellApplication {
       name = "refresh-xauthority";
       runtimeInputs = with pkgs; [
-        xauth
+        xorg.xauth
         gnused
       ];
       text = ''
