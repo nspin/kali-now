@@ -84,6 +84,10 @@ in {
       system.build.refreshXauthority
     ];
 
+    environment.sessionVariables = {
+        XAUTHORITY = "$HOME/.Xauthority";
+    };
+
     system.build.refreshXauthority = pkgs.writeShellApplication {
       name = "refresh-xauthority";
       runtimeInputs = with pkgs; [
@@ -91,7 +95,7 @@ in {
         gnused
       ];
       text = ''
-        xauth -i -f /host.Xauthority nlist |  sed -e 's/^..../ffff/' |  bin/xauth -f $HOME/.Xauthority nmerge -
+        xauth -i -f /host.Xauthority nlist |  sed -e 's/^..../ffff/' |  bin/xauth -f $XAUTHORITY nmerge -
       '';
     };
 
