@@ -83,6 +83,7 @@ in {
 
     environment.systemPackages = [
       config.system.build.refreshXauthority
+      config.system.build.run
     ];
 
     environment.sessionVariables = {
@@ -99,6 +100,15 @@ in {
       text = ''
         touch $XAUTHORITY
         xauth -i -f /host.Xauthority nlist | sed -e 's/^..../ffff/' | xauth -f $XAUTHORITY nmerge -
+      '';
+    };
+
+    system.build.run = pkgs.writeShellApplication {
+      name = "run";
+      checkPhase = false;
+      text = ''
+        refresh-xauthority
+        env $(cat /container-init/env.txt | grep DISPLAY) virt-manager
       '';
     };
 
