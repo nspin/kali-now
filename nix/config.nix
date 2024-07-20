@@ -18,6 +18,8 @@ in {
     networking.firewall.enable = false;
     users.mutableUsers = false;
 
+    system.stateVersion = config.system.nixos.release;
+
     # services.getty.autologinUser = "root";
     services.getty.autologinUser = "x";
 
