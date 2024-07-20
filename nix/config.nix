@@ -80,6 +80,42 @@ in {
       };
     };
 
+    environment.systemPackages = [
+      system.build.refreshXauthority
+    ];
+
+    system.build.refreshXauthority = pkgs.writeShellApplication {
+      name = "refresh-xauthority";
+      runtimeInputs = with pkgs; [
+        xauth
+        gnused
+      ];
+      text = ''
+        xauth -i -f /host.Xauthority nlist |  sed -e 's/^..../ffff/' |  bin/xauth -f $HOME/.Xauthority nmerge -
+      '';
+    };
+
+    system.build.s = pkgs.writeShellApplication {
+      name = "x";
+      runtimeInputs = with pkgs; [
+        iproute2
+        iptables
+      ];
+      text = ''
+        br_addr="192.168.122.1"
+        br_dev="vbr0"
+        ip link add $br_dev type bridge stp_state 1 forward_delay 0
+        ip link set $br_dev up
+        ip addr add $br_addr/16 dev $br_dev
+        iptables -t nat -F
+        iptables -t nat -A POSTROUTING -s $br_addr/16 ! -o $br_dev -j MASQUERADE
+      '';
+    };
+
+    networking.localCommands = ''
+      ${config.system.build.s}/bin/*
+    '';
+
   };
 
 }
