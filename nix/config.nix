@@ -10,9 +10,9 @@ in {
 
   config = {
     boot.isContainer = true;
-    users.mutableUsers = false;
     nix.enable = false;
     networking.firewall.enable = false;
+    users.mutableUsers = false;
 
     system.stateVersion = "24.11";
 
