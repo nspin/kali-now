@@ -14,17 +14,26 @@ in {
   config = {
 
     # networking.resolvconf.enable = false;
+    # networking.resolvconf.enable = true;
     # networking.useHostResolvConf = true;
   
     # avoid rebuilds
     # environment.noXlibs = false;
 
-    # system.stateVersion = config.system.nixos.release;
+    system.stateVersion = config.system.nixos.release;
 
     # boot.isContainer = true;
     # nix.enable = false;
+    networking.hostName = "yyy";
+    networking.useDHCP = false;
 
     services.getty.autologinUser = "root";
+
+    environment.systemPackages = [
+      pkgs.bind.dnsutils
+      pkgs.dig
+    ];
+
 
     # networking.firewall.enable = false;
     # networking.firewall.logRefusedPackets = true;
@@ -37,13 +46,13 @@ in {
     # # services.getty.autologinUser = "root";
     # services.getty.autologinUser = "x";
 
-    # system.build.containerInit = pkgs.writeScript "x.sh" ''
-    #   #!${pkgs.runtimeShell}
-    #   ${pkgs.coreutils}/bin/mkdir /container-init
-    #   ${pkgs.coreutils}/bin/cp -r /etc /container-init
-    #   ${pkgs.coreutils}/bin/env > /container-init/env.txt
-    #   exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
-    # '';
+    system.build.containerInit = pkgs.writeScript "x.sh" ''
+      #!${pkgs.runtimeShell}
+      ${pkgs.coreutils}/bin/mkdir /container-init
+      ${pkgs.coreutils}/bin/cp -r /etc /container-init
+      ${pkgs.coreutils}/bin/env > /container-init/env.txt
+      exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
+    '';
 
     # virtualisation.libvirtd.enable = true;
     # virtualisation.libvirtd.allowedBridges = [
