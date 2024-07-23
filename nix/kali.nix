@@ -23,6 +23,7 @@ let
         url = "https://cdimage.kali.org/kali-2024.2/kali-linux-2024.2-live-amd64.iso";
         hash = "sha256-jOcbFihfiHG5jj8hVThvEjwv3KkCUzDA0TSfRHmOZek=";
       };
+
       vmQcow2 = runCommand "kali-live-persistent.qcow2" {
         nativeBuildInputs = [ qemu libguestfs-with-appliance ];
       } ''
