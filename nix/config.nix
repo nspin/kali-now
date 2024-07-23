@@ -134,6 +134,8 @@ in {
       ];
       checkPhase = false;
       text = ''
+        sudo ${config.system.build.s}/bin/*
+
         ensure_user_dir() {
           if [ ! -d $1 ]; then
             sudo mkdir -p $1
@@ -208,9 +210,9 @@ in {
       '';
     };
 
-    networking.localCommands = ''
-      ${config.system.build.s}/bin/*
-    '';
+    # networking.localCommands = ''
+    #   ${config.system.build.s}/bin/*
+    # '';
 
   };
 
