@@ -3,7 +3,6 @@
 let
   inherit (config.system.build) theseImages;
 
-
 in {
   imports = [
     "${modulesPath}/profiles/minimal.nix"
