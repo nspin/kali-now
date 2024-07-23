@@ -32,20 +32,13 @@ in {
 
     services.getty.autologinUser = "root";
 
-    # https://systemd.io/CONTAINER_INTERFACE/
+    # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
 
     system.build.containerInit = pkgs.writeScript "x.sh" ''
       #!${pkgs.runtimeShell}
-      ${pkgs.coreutils}/bin/mkdir /container-init
-      ${pkgs.coreutils}/bin/cp -r /etc /container-init
-      ${pkgs.coreutils}/bin/env > /container-init/env.txt
+      ${pkgs.coreutils}/bin/printf "%s" "$DISPLAY" > /run/hack/display
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
-
-    environment.systemPackages = [
-      pkgs.bind.dnsutils
-      pkgs.dig
-    ];
 
   };
 
