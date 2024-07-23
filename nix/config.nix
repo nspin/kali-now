@@ -42,11 +42,11 @@ in {
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
 
-    networking.firewall.enable = false;
+    # networking.firewall.enable = false;
 
-    # networking.firewall.enable = true;
-    # networking.firewall.logRefusedPackets = true;
-    # networking.firewall.allowedUDPPorts = [ 53 67 ];
+    networking.firewall.enable = true;
+    networking.firewall.logRefusedPackets = true;
+    networking.firewall.allowedUDPPorts = [ 53 67 ];
 
     networking.bridges = {
       "${bridgeName}".interfaces = [
