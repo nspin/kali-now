@@ -260,7 +260,7 @@ in rec {
   nixos = import (pkgs.path + "/nixos") {
     configuration.imports = [
       # ./config.nix
-      ./config2.nix
+      ./minimal-config.nix
       {
         config.system.build.theseImages = images;
       }
