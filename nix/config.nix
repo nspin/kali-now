@@ -108,8 +108,15 @@ in {
       pkgs.xorg.xauth
       pkgs.qemu
       pkgs.libvirt
+
+      # utils
       config.system.build.run
       config.system.build.xsetup
+
+      # debugging
+      strace
+      inetutils
+      ethtool
     ];
 
     system.build.xsetup = with theseImages; pkgs.writeShellApplication {

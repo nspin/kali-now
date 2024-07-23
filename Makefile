@@ -7,6 +7,9 @@ dockerfile := Dockerfile
 shared_dir := shared
 
 host_uid := $(shell id -u)
+host_gid := $(shell id -g)
+kvm_gid := $(shell stat -c '%g' /dev/kvm)
+audio_gid := $(shell stat -c '%g' /dev/snd/timer)
 
 container_init := $$(nix-build nix -A containerInit)
 container_bash := /run/current-system/sw/bin/bash
