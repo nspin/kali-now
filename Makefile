@@ -31,7 +31,7 @@ run: build | $(shared_dir)
 		--device /dev/kvm \
 		--device /dev/net/tun \
 		--device /dev/snd \
-		--device /dev/usb \
+		--device /dev/bus/usb \
 		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
