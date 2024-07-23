@@ -51,9 +51,9 @@ run: build | $(shared_dir)
 r: build | $(shared_dir)
 	docker run --rm -it \
 		--name $(container_name) \
-		--cap-add=NET_ADMIN \
 		--privileged \
 		--tmpfs /tmp \
+		--tmpfs /run \
 		--device /dev/kvm \
 		--device /dev/net/tun \
 		--device /dev/snd \
@@ -66,8 +66,6 @@ r: build | $(shared_dir)
 		--env DISPLAY \
 		$(image_tag) \
 		$$(nix-build nix -A containerInit)
-
-		# $$(nix-build nix -A toplevel)/init
 
 .PHONY: exec
 exec:
