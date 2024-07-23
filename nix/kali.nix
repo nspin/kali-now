@@ -15,85 +15,86 @@ let
 in
 
 let
-  runtimeImageDirectory = if enablePersistentImage then "/shared/container" else "/images";
+  runtimeDiskDirectory = if enablePersistentImage then "/shared/container" else "/home/x";
 
-  images =
-    let
-      iso = fetchurl {
-        url = "https://cdimage.kali.org/kali-2024.2/kali-linux-2024.2-live-amd64.iso";
-        hash = "sha256-jOcbFihfiHG5jj8hVThvEjwv3KkCUzDA0TSfRHmOZek=";
-      };
+  runtimeDiskPath = "${runtimeDiskDirectory}/vm.qcow2";
 
-      vmQcow2 = runCommand "kali-live-persistent.qcow2" {
-        nativeBuildInputs = [ qemu libguestfs-with-appliance ];
-      } ''
-        img=new.qcow2
+  iso = fetchurl {
+    url = "https://cdimage.kali.org/kali-2024.2/kali-linux-2024.2-live-amd64.iso";
+    hash = "sha256-jOcbFihfiHG5jj8hVThvEjwv3KkCUzDA0TSfRHmOZek=";
+  };
 
-        qemu-img create -f qcow2 -o backing_fmt=raw -o backing_file=${iso} $img
-        qemu-img resize -f qcow2 $img +${persistenceSize}
+  vmQcow2 = runCommand "kali-live-persistent.qcow2" {
+    nativeBuildInputs = [ qemu libguestfs-with-appliance ];
+  } ''
+    img=new.qcow2
 
-        last_byte=$(
-          guestfish add $img : run : part-list /dev/sda | \
-            sed -rn 's,^  part_end: ([0-9]+)$,\1,p' | sort | tail -n 1
-        )
+    qemu-img create -f qcow2 -o backing_fmt=raw -o backing_file=${iso} $img
+    qemu-img resize -f qcow2 $img +${persistenceSize}
 
-        sector_size=$(
-          guestfish add $img : run : blockdev-getss /dev/sda
-        )
+    last_byte=$(
+      guestfish add $img : run : part-list /dev/sda | \
+        sed -rn 's,^  part_end: ([0-9]+)$,\1,p' | sort | tail -n 1
+    )
 
-        first_sector=$(expr $(expr $last_byte + 1) / $sector_size)
+    sector_size=$(
+      guestfish add $img : run : blockdev-getss /dev/sda
+    )
 
-        cat > persistence.conf <<EOF
-        / union
-        EOF
+    first_sector=$(expr $(expr $last_byte + 1) / $sector_size)
 
-        guestfish <<EOF
-        add $img
-        run
-        part-add /dev/sda primary $first_sector -1
-        mkfs ext4 /dev/sda3 label:persistence
-        mount /dev/sda3 /
-        copy-in persistence.conf /
-        EOF
+    cat > persistence.conf <<EOF
+    / union
+    EOF
 
-        mv $img $out
-      '';
+    guestfish <<EOF
+    add $img
+    run
+    part-add /dev/sda primary $first_sector -1
+    mkfs ext4 /dev/sda3 label:persistence
+    mount /dev/sda3 /
+    copy-in persistence.conf /
+    EOF
 
-      vmXmlRaw = ./vm.xml;
+    mv $img $out
+  '';
 
-      vmXml = runCommand "vm.xml" {} ''
-        sed \
-          -e 's,@runtimeImagePath@,${runtimeImageDirectory}/vm.qcow2,' \
-          -e 's,@memoryKilobytes@,${toString (memoryMegabytes * 1024)},' \
-          < ${vmXmlRaw} > $out
-      '';
+  vmXmlRaw = ./vm.xml;
 
-      networkXml = writeText "network.xml" ''
-        <network>
-          <name>kali-network</name>
-          <forward mode='bridge'/>
-          <bridge name='vbr0' />
-        </network>
-      '';
+  vmXml = runCommand "vm.xml" {} ''
+    sed \
+      -e 's,@runtimeDiskPath@,${runtimeDiskPath},' \
+      -e 's,@memoryKilobytes@,${toString (memoryMegabytes * 1024)},' \
+      < ${vmXmlRaw} > $out
+  '';
 
-    in {
-      inherit iso;
-      inherit vmQcow2 vmXml networkXml;
-      inherit runtimeImageDirectory;
-    };
+  networkXml = writeText "network.xml" ''
+    <network>
+      <name>kali-network</name>
+      <forward mode='bridge'/>
+      <bridge name='vbr0' />
+    </network>
+  '';
+
+  those = {
+    inherit iso;
+    inherit vmQcow2 vmXml networkXml;
+    inherit runtimeDiskDirectory;
+    inherit runtimeDiskPath;
+  };
 
 in rec {
-  inherit images;
+  inherit those;
 
-  nixos = import (pkgs.path + "/nixos") {
-    specialArgs = {
-      inherit images;
-    };
+  system = import (pkgs.path + "/nixos") {
     configuration.imports = [
       ./config.nix
       # ./minimal-config.nix
+      {
+        config.system.build.kaliNow = those;
+      }
     ];
   };
 
-  inherit (nixos.config.system.build) toplevel containerInit;
+  inherit (system.config.system.build) containerInit;
 }

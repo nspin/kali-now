@@ -1,7 +1,9 @@
 { lib, config, pkgs, modulesPath, ... }:
 
 let
-  inherit (config.system.build) theseImages;
+  inherit (config.system.build.kaliNow)
+    runtimeDiskPath vmQcow2 networkXml vmXml
+  ;
 
 in {
   imports = [
@@ -104,76 +106,8 @@ in {
     #   };
     # };
 
-    environment.systemPackages = [
-      pkgs.xorg.xauth
-      pkgs.qemu
-      pkgs.libvirt
-
-      # utils
-      config.system.build.run
-      config.system.build.xsetup
-
-      # debugging
-      strace
-      inetutils
-      ethtool
-    ];
-
-    system.build.xsetup = with theseImages; pkgs.writeShellApplication {
-      name = "xsetup";
-      runtimeInputs = with pkgs; [
-        qemu
-        libvirt
-      ];
-      checkPhase = false;
-      text = ''
-        sudo ${config.system.build.s}/bin/*
-
-        ensure_user_dir() {
-          if [ ! -d $1 ]; then
-            sudo mkdir -p $1
-            sudo chown x:x $1
-          fi
-        }
-
-        shared_base=/shared
-        shared_dirs="$shared_base/container $shared_base/vm"
-        ensure_user_dir $shared_base
-        for d in $shared_dirs; do
-          ensure_user_dir $d
-        done
-
-        ensure_user_dir ${runtimeImageDirectory}
-
-        ensure_image() {
-          if [ ! -f ${runtimeImageDirectory}/$2 ]; then
-            qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=$1 ${runtimeImageDirectory}/$2
-          fi
-        }
-
-        ensure_image ${vmQcow2} vm.qcow2
-
-        virsh_c() {
-          virsh -c qemu:///session "$@"
-        }
-
-        virsh_c net-define ${networkXml}
-        virsh_c net-autostart kali-network
-        virsh_c net-start kali-network
-        virsh_c define ${vmXml}
-      '';
-    };
-
-    system.build.run = pkgs.writeShellApplication {
-      name = "run";
-      checkPhase = false;
-      text = ''
-        virt-manager -c qemu:///session
-      '';
-    };
-
-    system.build.s = pkgs.writeShellApplication {
-      name = "x";
+    system.build.setupVMNetwork = pkgs.writeShellApplication {
+      name = "setup-vm-network";
       runtimeInputs = with pkgs; [
         iproute2
         iptables
@@ -189,9 +123,74 @@ in {
       '';
     };
 
+    # TODO doesn't work
     # networking.localCommands = ''
-    #   ${config.system.build.s}/bin/*
+    #   ${config.system.build.setupVMNetwork}/bin/*
     # '';
+
+    environment.systemPackages = with pkgs; [
+      xorg.xauth
+      qemu
+      libvirt
+
+      # utils
+      config.system.build.xsetup
+      config.system.build.xrun
+
+      # debugging
+      strace
+      inetutils
+      ethtool
+    ];
+
+    system.build.xsetup = pkgs.writeShellApplication {
+      name = "xsetup";
+      runtimeInputs = with pkgs; [
+        qemu
+        libvirt
+        config.system.build.setupVMNetwork
+      ];
+      checkPhase = false;
+      text = ''
+        sudo ${config.system.build.setupVMNetwork.name}
+
+        ensure_user_dir() {
+          if [ ! -d $1 ]; then
+            sudo mkdir -p $1
+            sudo chown x:x $1
+          fi
+        }
+
+        shared_root=/shared
+        shared_dirs="$shared_root/container $shared_root/vm"
+        for d in $shared_dirs; do
+          ensure_user_dir $d
+        done
+
+        ensure_user_dir $(dirname ${runtimeDiskPath})
+
+        if [ ! -f ${runtimeDiskPath} ]; then
+          qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=${vmQcow2} ${runtimeDiskPath}
+        fi
+
+        virsh_c() {
+          virsh -c qemu:///session "$@"
+        }
+
+        virsh_c net-define ${networkXml}
+        virsh_c net-autostart kali-network
+        virsh_c net-start kali-network
+        virsh_c define ${vmXml}
+      '';
+    };
+
+    system.build.xrun = pkgs.writeShellApplication {
+      name = "xrun";
+      checkPhase = false;
+      text = ''
+        virt-manager -c qemu:///session
+      '';
+    };
 
   };
 

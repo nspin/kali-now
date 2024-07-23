@@ -6,6 +6,7 @@ dockerfile := Dockerfile
 
 shared_dir := shared
 
+# TODO check that these match the container system
 host_uid := $(shell id -u)
 host_gid := $(shell id -g)
 kvm_gid := $(shell stat -c '%g' /dev/kvm)
