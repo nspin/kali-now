@@ -28,7 +28,7 @@ in {
     environment.noXlibs = false;
 
     nix.enable = false;
-    networking.firewall.enable = false;
+    # networking.firewall.enable = false;
 
     # services.getty.autologinUser = "root";
 
@@ -39,8 +39,7 @@ in {
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
 
-
-    # networking.firewall.enable = true;
+    networking.firewall.enable = true;
     networking.firewall.logRefusedPackets = true;
     networking.firewall.allowedUDPPorts = [ 53 67 ];
 
