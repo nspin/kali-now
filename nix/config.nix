@@ -6,36 +6,48 @@ let
 in {
   imports = [
     "${modulesPath}/profiles/minimal.nix"
-    "${modulesPath}/profiles/headless.nix"
   ];
 
   config = {
-  
-    # avoid rebuilds
-    environment.noXlibs = false;
 
     system.stateVersion = config.system.nixos.release;
 
     boot.isContainer = true;
+
+    networking.useDHCP = false;
+    networking.resolvconf.enable = false;
+
+    # TODO these should work
+    # networking.resolvconf.enable = true;
+    # networking.useHostResolvConf = true;
+
+    # HACK networking.useHostResolvConf broken, this causes failed ln rather than overwriting
+    environment.etc."resolv.conf".text = "";
+  
+    # revert from minimal.nix avoid rebuilds
+    environment.noXlibs = false;
+
     nix.enable = false;
     networking.firewall.enable = false;
+
+    # services.getty.autologinUser = "root";
+
+    # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
+
+    system.build.containerInit = pkgs.writeScript "x.sh" ''
+      #!${pkgs.runtimeShell}
+      exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
+    '';
+
+
+    # networking.firewall.enable = true;
     networking.firewall.logRefusedPackets = true;
     networking.firewall.allowedUDPPorts = [ 53 67 ];
 
     security.sudo.wheelNeedsPassword = false;
+
     # users.mutableUsers = false;
     # users.allowNoPasswordLogin = true;
-
-    # services.getty.autologinUser = "root";
-    services.getty.autologinUser = "x";
-
-    system.build.containerInit = pkgs.writeScript "x.sh" ''
-      #!${pkgs.runtimeShell}
-      ${pkgs.coreutils}/bin/mkdir /container-init
-      ${pkgs.coreutils}/bin/cp -r /etc /container-init
-      ${pkgs.coreutils}/bin/env > /container-init/env.txt
-      exec ${pkgs.coreutils}/bin/env -i ${config.system.build.toplevel}/init  
-    '';
 
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
@@ -111,7 +123,7 @@ in {
     ];
 
     environment.sessionVariables = {
-        XAUTHORITY = "$HOME/.Xauthority";
+      XAUTHORITY = "$HOME/.Xauthority";
     };
 
     system.build.xsetup = with theseImages; pkgs.writeShellApplication {
@@ -175,7 +187,7 @@ in {
       checkPhase = false;
       text = ''
         refresh-xauthority
-        env $(cat /container-init/env.txt | grep DISPLAY) virt-manager -c qemu:///session
+        virt-manager -c qemu:///session
       '';
     };
 

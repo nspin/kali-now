@@ -6,6 +6,8 @@ dockerfile := Dockerfile
 
 shared_dir := shared
 
+host_uid := $(shell id -u)
+
 entry_script_fragment := $$(nix-build nix -A containerInit)
 interact_script_fragment := /run/current-system/sw/bin/bash
 
@@ -35,7 +37,6 @@ run: build | $(shared_dir)
 		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
 		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
 		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
-		--env DISPLAY \
 		$(image_tag) \
 		$(entry_script_fragment)
 

@@ -36,7 +36,6 @@ in {
 
     system.build.containerInit = pkgs.writeScript "x.sh" ''
       #!${pkgs.runtimeShell}
-      ${pkgs.coreutils}/bin/printf "%s" "$DISPLAY" > /run/hack/display
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
 
