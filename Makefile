@@ -67,6 +67,8 @@ r: build | $(shared_dir)
 		$(image_tag) \
 		$$(nix-build nix -A containerInit)
 
+		# $$(nix-build nix -A toplevel)/init
+
 .PHONY: exec
 exec:
 	docker exec -it \
