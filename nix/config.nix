@@ -5,6 +5,8 @@ let
     runtimeDiskPath vmQcow2 networkXml vmXml
   ;
 
+  bridgeName = "vbr0";
+
 in {
   imports = [
     "${modulesPath}/profiles/minimal.nix"
@@ -46,9 +48,15 @@ in {
     # networking.firewall.logRefusedPackets = true;
     # networking.firewall.allowedUDPPorts = [ 53 67 ];
 
+    networking.bridges = {
+      "${bridgeName}".interfaces = [
+        "eth0@if255"
+      ];
+    };
+
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
-      "vbr0"
+      bridgeName
     ];
 
     virtualisation.spiceUSBRedirection.enable = true;
@@ -80,12 +88,12 @@ in {
       enable = true;
       resolveLocalQueries = false;
       settings = {
-        interface = "vbr0";
+        interface = bridgeName;
         dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
-        dhcp-option = [
-          "option:router,192.168.122.1"
-          "option:dns-server,192.168.122.1"
-        ];
+        # dhcp-option = [
+        #   "option:router,192.168.122.1"
+        #   "option:dns-server,192.168.122.1"
+        # ];
         # log-dhcp = true;
         # log-queries = true;
       };
@@ -106,22 +114,22 @@ in {
     #   };
     # };
 
-    system.build.setupVMNetwork = pkgs.writeShellApplication {
-      name = "setup-vm-network";
-      runtimeInputs = with pkgs; [
-        iproute2
-        iptables
-      ];
-      text = ''
-        br_addr="192.168.122.1"
-        br_dev="vbr0"
-        ip link add $br_dev type bridge stp_state 1 forward_delay 0
-        ip link set $br_dev up
-        ip addr add $br_addr/16 dev $br_dev
-        iptables -t nat -F
-        iptables -t nat -A POSTROUTING -s $br_addr/16 ! -o $br_dev -j MASQUERADE
-      '';
-    };
+    # system.build.setupVMNetwork = pkgs.writeShellApplication {
+    #   name = "setup-vm-network";
+    #   runtimeInputs = with pkgs; [
+    #     iproute2
+    #     iptables
+    #   ];
+    #   text = ''
+    #     br_addr="192.168.122.1"
+    #     br_dev="vbr0"
+    #     ip link add $br_dev type bridge stp_state 1 forward_delay 0
+    #     ip link set $br_dev up
+    #     ip addr add $br_addr/16 dev $br_dev
+    #     iptables -t nat -F
+    #     iptables -t nat -A POSTROUTING -s $br_addr/16 ! -o $br_dev -j MASQUERADE
+    #   '';
+    # };
 
     # TODO doesn't work
     # networking.localCommands = ''
@@ -148,12 +156,11 @@ in {
       runtimeInputs = with pkgs; [
         qemu
         libvirt
-        config.system.build.setupVMNetwork
+        # config.system.build.setupVMNetwork
       ];
       checkPhase = false;
+        # sudo ${config.system.build.setupVMNetwork.name}
       text = ''
-        sudo ${config.system.build.setupVMNetwork.name}
-
         ensure_user_dir() {
           if [ ! -d $1 ]; then
             sudo mkdir -p $1
