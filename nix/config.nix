@@ -56,6 +56,8 @@ in {
 
     virtualisation.spiceUSBRedirection.enable = true;
 
+    security.polkit.debug = true;
+
     programs.virt-manager.enable = true;
 
     # ids.uids.qemu-libvirtd = lib.mkForce 1000;
@@ -67,6 +69,14 @@ in {
       # password = "";
       extraGroups = [ "wheel" ];
     };
+
+    security.polkit.extraConfig = ''
+      polkit.addRule(function(action, subject) {
+          if (action.id == "org.spice-space.lowlevelusbaccess" && subject.isInGroup("wheel")){
+              return polkit.Result.YES;
+          }
+      });
+    '';
 
     # users.users.x = {
     #   # uid = 1000;
