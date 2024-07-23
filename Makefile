@@ -8,8 +8,8 @@ shared_dir := shared
 
 host_uid := $(shell id -u)
 
-entry_script_fragment := $$(nix-build nix -A containerInit)
-interact_script_fragment := /run/current-system/sw/bin/bash
+container_init := $$(nix-build nix -A containerInit)
+container_bash := /run/current-system/sw/bin/bash
 
 .PHONY: none
 none:
@@ -36,25 +36,26 @@ run: build | $(shared_dir)
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \
 		--mount type=bind,src=/tmp/.X11-unix,dst=/tmp/.X11-unix,ro \
-		--mount type=bind,src=$(XAUTHORITY),dst=/host.Xauthority,ro \
 		--mount type=bind,src=$(abspath $(shared_dir)),dst=/shared \
 		$(image_tag) \
-		$(entry_script_fragment)
+		$(container_init)
 
 .PHONY: exec
 exec:
+	./nix/container-xauthority.sh env-host \
 	docker exec -it \
 		--user $(host_uid) \
+		--env XAUTHORITY_CONTENTS \
 		--env DISPLAY \
 		$(container_name) \
-		$(interact_script_fragment)
+		$(container_bash) -i -c "exec $$(nix-store --add ./nix/container-xauthority.sh) \"\$$@\"" -- env-container $(container_bash)
 
 .PHONY: exec-as-root
 exec-as-root:
 	docker exec -it \
 		--env DISPLAY \
 		$(container_name) \
-		$(interact_script_fragment)
+		$(container_bash)
 
 .PHONY: rm-container
 rm-container:

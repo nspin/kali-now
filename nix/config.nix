@@ -44,11 +44,6 @@ in {
     # networking.firewall.logRefusedPackets = true;
     # networking.firewall.allowedUDPPorts = [ 53 67 ];
 
-    security.sudo.wheelNeedsPassword = false;
-
-    # users.mutableUsers = false;
-    # users.allowNoPasswordLogin = true;
-
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
       "vbr0"
@@ -66,9 +61,10 @@ in {
     users.users.x = {
       uid = 1000;
       isNormalUser = true;
-      # password = "";
       extraGroups = [ "wheel" ];
     };
+
+    security.sudo.wheelNeedsPassword = false;
 
     security.polkit.extraConfig = ''
       polkit.addRule(function(action, subject) {
@@ -78,12 +74,20 @@ in {
       });
     '';
 
-    # users.users.x = {
-    #   # uid = 1000;
-    #   isNormalUser = true;
-    #   # password = "";
-    #   extraGroups = [ "wheel" ];
-    # };
+    services.dnsmasq = {
+      enable = true;
+      resolveLocalQueries = false;
+      settings = {
+        interface = "vbr0";
+        dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
+        dhcp-option = [
+          "option:router,192.168.122.1"
+          "option:dns-server,192.168.122.1"
+        ];
+        # log-dhcp = true;
+        # log-queries = true;
+      };
+    };
 
     # services.dnsmasq = {
     #   enable = true;
@@ -97,46 +101,16 @@ in {
     #     dhcp-no-override = true;
     #     dhcp-authoritative = true;
     #     dhcp-lease-max = "253";
-
-    #     # dhcp-range = "192.168.12.100,192.168.12.200,96h";
-    #     # dhcp-option = [
-    #     #   "option:router,192.168.12.1"
-    #     #   "option:dns-server,192.168.12.1"
-    #     # ];
-    #     # log-dhcp = true;
-    #     # log-queries = true;
     #   };
     # };
 
-    services.dnsmasq = {
-      enable = true;
-      resolveLocalQueries = false;
-      settings = {
-        interface = "vbr0";
-        dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
-        dhcp-option = [
-          "option:router,192.168.122.1"
-          "option:dns-server,192.168.122.1"
-        ];
-        log-dhcp = true;
-        log-queries = true;
-      };
-        # enable-tftp
-        # tftp-root=/tftpboot
-        # pxe-service=0,"Raspberry Pi Boot"
-    };
-
     environment.systemPackages = [
+      pkgs.xorg.xauth
       pkgs.qemu
       pkgs.libvirt
-      config.system.build.refreshXauthority
       config.system.build.run
       config.system.build.xsetup
     ];
-
-    environment.sessionVariables = {
-      XAUTHORITY = "$HOME/.Xauthority";
-    };
 
     system.build.xsetup = with theseImages; pkgs.writeShellApplication {
       name = "xsetup";
@@ -183,24 +157,10 @@ in {
       '';
     };
 
-    system.build.refreshXauthority = pkgs.writeShellApplication {
-      name = "refresh-xauthority";
-      runtimeInputs = with pkgs; [
-        xorg.xauth
-        gnused
-      ];
-      checkPhase = false;
-      text = ''
-        touch $XAUTHORITY
-        xauth -i -f /host.Xauthority nlist | sed -e 's/^..../ffff/' | xauth -f $XAUTHORITY nmerge -
-      '';
-    };
-
     system.build.run = pkgs.writeShellApplication {
       name = "run";
       checkPhase = false;
       text = ''
-        refresh-xauthority
         virt-manager -c qemu:///session
       '';
     };
