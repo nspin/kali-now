@@ -54,6 +54,8 @@ in {
       "vbr0"
     ];
 
+    virtualisation.spiceUSBRedirection.enable = true;
+
     programs.virt-manager.enable = true;
 
     # ids.uids.qemu-libvirtd = lib.mkForce 1000;
