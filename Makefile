@@ -26,9 +26,11 @@ build:
 	docker build \
 		-t $(image_tag) -f $(dockerfile) /var/empty
 
+		# -d
 .PHONY: run
 run: build | $(shared_dir)
-	docker run -d -it --name $(container_name) \
+	docker run -it --name $(container_name) \
+		--rm \
 		--privileged \
 		--tmpfs /tmp \
 		--tmpfs /run \

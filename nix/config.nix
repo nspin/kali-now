@@ -33,7 +33,7 @@ in {
 
     nix.enable = false;
 
-    # services.getty.autologinUser = "root";
+    services.getty.autologinUser = "root";
 
     # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
 
@@ -42,17 +42,27 @@ in {
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
 
-    # networking.firewall.enable = false;
+    networking.usePredictableInterfaceNames = false;
+#
+    networking.firewall.enable = false;
 
-    networking.firewall.enable = true;
-    networking.firewall.logRefusedPackets = true;
-    networking.firewall.allowedUDPPorts = [ 53 67 ];
+    # networking.firewall.enable = true;
+    # networking.firewall.logRefusedPackets = true;
+    # networking.firewall.allowedUDPPorts = [ 53 67 ];
 
     networking.bridges = {
-      "${bridgeName}".interfaces = [
-        "eth0@if255"
-      ];
+      "${bridgeName}" = {
+        interfaces = [
+          "eth0"
+        ];
+        rstp = true;
+      };
     };
+
+    networking.interfaces."${bridgeName}".ipv4.addresses = [{
+      address = "192.168.122.1";
+      prefixLength = 24;
+    }];
 
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
