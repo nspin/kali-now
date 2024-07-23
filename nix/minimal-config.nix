@@ -30,7 +30,7 @@ in {
     nix.enable = false;
     networking.firewall.enable = false;
 
-    services.getty.autologinUser = "root";
+    # services.getty.autologinUser = "root";
 
     # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
 
