@@ -169,16 +169,19 @@ in {
         iproute2
         iptables
       ];
+      checkPhase = false;
       text = ''
         br_addr="192.168.122.1"
         br_dev="vbr0"
-        ip link add $br_dev type bridge stp_state 1 forward_delay 0
+        ip link add name $br_dev type bridge
         ip link set $br_dev up
-        ip addr add $br_addr/16 dev $br_dev
+        ip addr add $br_addr/24 dev $br_dev
         iptables -t nat -F
-        iptables -t nat -A POSTROUTING -s $br_addr/16 ! -o $br_dev -j MASQUERADE
+        iptables -t nat -A POSTROUTING -s $br_addr/24 ! -o $br_dev -j MASQUERADE
       '';
     };
+        # ip link add $br_dev type bridge stp_state 1 forward_delay 0
+        # ip link set $br_dev up
 
     systemd.services = {
       lab-setup-vm-rest = {
