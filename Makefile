@@ -55,7 +55,7 @@ exec:
 		--env XAUTHORITY_CONTENTS \
 		--env DISPLAY \
 		$(container_name) \
-		$(container_bash) -i -c "exec $$container_xauthority \"\$$@\"" -- env-container $(container_bash)
+		$$container_xauthority env-container $(container_bash)
 
 .PHONY: exec-as-root
 exec-as-root:
