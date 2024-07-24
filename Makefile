@@ -48,13 +48,14 @@ run: build | $(shared_dir)
 
 .PHONY: exec
 exec:
-	./nix/container-xauthority.sh env-host \
+	container_xauthority=$$(nix-build nix -A containerXauthority)/bin/container-xauthority && \
+	$$container_xauthority env-host \
 	docker exec -it \
 		--user $(host_uid) \
 		--env XAUTHORITY_CONTENTS \
 		--env DISPLAY \
 		$(container_name) \
-		$(container_bash) -i -c "exec $$(nix-store --add ./nix/container-xauthority.sh) \"\$$@\"" -- env-container $(container_bash)
+		$(container_bash) -i -c "exec $$container_xauthority \"\$$@\"" -- env-container $(container_bash)
 
 .PHONY: exec-as-root
 exec-as-root:

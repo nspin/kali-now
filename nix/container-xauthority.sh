@@ -1,7 +1,3 @@
-#!/bin/sh
-
-set -eu -o pipefail
-
 contents() {
   xauth -i nextract - $DISPLAY | sed -e 's/^..../ffff/'
 }

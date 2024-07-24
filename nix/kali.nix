@@ -12,5 +12,5 @@ in rec {
     ];
   };
 
-  inherit (system.config.system.build) containerInit;
+  inherit (system.config.system.build.kaliNow) containerInit containerXauthority;
 }

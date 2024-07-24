@@ -32,6 +32,8 @@ let
     inherit persistenceSize;
   };
 
+  containerXauthority = pkgs.callPackage ./container-xauthority.nix {};
+
 in {
   imports = [
     "${modulesPath}/profiles/minimal.nix"
@@ -40,6 +42,7 @@ in {
   config = {
     system.build.kaliNow = {
       inherit vmXml networkXml vmQcow2;
+      inherit containerXauthority;
     };
 
     system.stateVersion = config.system.nixos.release;
@@ -67,7 +70,7 @@ in {
 
     # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
 
-    system.build.containerInit = pkgs.writeScript "x.sh" ''
+    system.build.kaliNow.containerInit = pkgs.writeScript "x.sh" ''
       #!${pkgs.runtimeShell}
       exec ${pkgs.coreutils}/bin/env -i container=docker ${config.system.build.toplevel}/init  
     '';
