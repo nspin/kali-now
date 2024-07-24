@@ -115,35 +115,35 @@ in {
       });
     '';
 
-    services.dnsmasq = {
-      enable = true;
-      resolveLocalQueries = false;
-      settings = {
-        interface = "vbr0";
-        dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
-        dhcp-option = [
-          "option:router,192.168.122.1"
-          "option:dns-server,192.168.122.1"
-        ];
-        # log-dhcp = true;
-        # log-queries = true;
-      };
-    };
-
     # services.dnsmasq = {
     #   enable = true;
     #   resolveLocalQueries = false;
     #   settings = {
-    #     strict-order = true;
-    #     except-interface = "lo";
-    #     bind-dynamic = true;
     #     interface = "vbr0";
-    #     dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0";
-    #     dhcp-no-override = true;
-    #     dhcp-authoritative = true;
-    #     dhcp-lease-max = "253";
+    #     dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
+    #     dhcp-option = [
+    #       "option:router,192.168.122.1"
+    #       "option:dns-server,192.168.122.1"
+    #     ];
+    #     # log-dhcp = true;
+    #     # log-queries = true;
     #   };
     # };
+
+    services.dnsmasq = {
+      enable = true;
+      resolveLocalQueries = false;
+      settings = {
+        strict-order = true;
+        except-interface = "lo";
+        bind-dynamic = true;
+        interface = "vbr0";
+        dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0";
+        dhcp-no-override = true;
+        dhcp-authoritative = true;
+        dhcp-lease-max = "253";
+      };
+    };
 
     # # TODO doesn't work
     # networking.localCommands = ''
@@ -152,7 +152,7 @@ in {
 
     systemd.services = {
       lab-setup-vm-network = {
-        after = [ "network.target" ];
+        requires = [ "network.target" ];
         wantedBy = [ "multi-user.target" ];
         unitConfig.ConditionCapability = "CAP_NET_ADMIN";
         serviceConfig.Type = "oneshot";
@@ -182,6 +182,10 @@ in {
     };
         # ip link add $br_dev type bridge stp_state 1 forward_delay 0
         # ip link set $br_dev up
+
+    networking.nat.enable = true;
+    # networking.nat.internalIPs = [ "192.168.122.0/24" ];
+    # networking.nat.externalInterface = "eth0";
 
     systemd.services = {
       lab-setup-vm-rest = {
