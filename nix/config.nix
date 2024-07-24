@@ -5,6 +5,7 @@ let
     runtimeDiskPath vmQcow2 networkXml vmXml
   ;
 
+  ifaceToHost = "eth0";
   bridgeName = "vbr0";
 
 in {
@@ -26,7 +27,7 @@ in {
     # networking.useHostResolvConf = true;
 
     # HACK networking.useHostResolvConf broken, this causes failed ln rather than overwriting
-    environment.etc."resolv.conf".text = "";
+    environment.etc."resolv.conf".text = lib.mkForce "";
   
     # revert from minimal.nix avoid rebuilds
     environment.noXlibs = false;
@@ -50,6 +51,40 @@ in {
     # networking.firewall.logRefusedPackets = true;
     # networking.firewall.allowedUDPPorts = [ 53 67 ];
 
+    networking.useNetworkd = true;
+    networking.useHostResolvConf = false;
+
+    systemd.network = {
+      netdevs = {
+        "20-${bridgeName}" = {
+          netdevConfig = {
+            Kind = "bridge";
+            Name = bridgeName;
+          };
+        };
+      };
+      networks = {
+        "30-${ifaceToHost}" = {
+          matchConfig.Name = ifaceToHost;
+          networkConfig.Bridge = bridgeName;
+          # linkConfig.RequiredForOnline = "enslaved";
+        };
+        "40-${bridgeName}" = {
+          matchConfig.Name = bridgeName;
+          bridgeConfig = {};
+          address = [ 
+            "192.168.122.1/24"
+          ]; 
+          # Disable address autoconfig when no IP configuration is required
+          # networkConfig.LinkLocalAddressing = "no";
+          # linkConfig = {
+          #   # or "routable" with IP addresses configured
+          #   RequiredForOnline = "carrier";
+          # };
+        };
+      };
+    };
+
     # networking.bridges = {
     #   "${bridgeName}" = {
     #     interfaces = [
@@ -58,26 +93,26 @@ in {
     #   };
     # };
 
-    networking.dhcpcd.enable = false;
+    # networking.dhcpcd.enable = false;
 
-    networking.interfaces = {
-      eth0 = {
-        useDHCP = false;
-      };
-      "${bridgeName}" = {
-        # networking.interfaces.abc = {
-          useDHCP = false;
-          # useDHCP = true;
-          # useDHCP = null;
-          ipv4.addresses = [
-            {
-              address = "192.168.122.1";
-              prefixLength = 24;
-            }
-          ];
-          # virtual = true;
-        };
-    };
+    # networking.interfaces = {
+    #   eth0 = {
+    #     useDHCP = false;
+    #   };
+    #   "${bridgeName}" = {
+    #     # networking.interfaces.abc = {
+    #       useDHCP = false;
+    #       # useDHCP = true;
+    #       # useDHCP = null;
+    #       ipv4.addresses = [
+    #         {
+    #           address = "192.168.122.1";
+    #           prefixLength = 24;
+    #         }
+    #       ];
+    #       # virtual = true;
+    #     };
+    # };
 
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
