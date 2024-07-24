@@ -37,10 +37,7 @@ run: build | $(shared_dir)
 		--privileged \
 		--tmpfs /tmp \
 		--tmpfs /run \
-		--device /dev/kvm \
-		--device /dev/net/tun \
-		--device /dev/snd \
-		--device /dev/bus/usb \
+		--mount type=bind,src=/dev,dst=/dev \
 		--mount type=bind,src=/nix/store,dst=/nix/store,ro \
 		--mount type=bind,src=/nix/var/nix/db,dst=/nix/var/nix/db,ro \
 		--mount type=bind,src=/nix/var/nix/daemon-socket,dst=/nix/var/nix/daemon-socket,ro \

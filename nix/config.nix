@@ -31,6 +31,8 @@ in {
 
     nix.enable = false;
 
+    # services.udev.enable = lib.mkForce true;
+
     services.getty.autologinUser = "root";
 
     # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
@@ -74,9 +76,9 @@ in {
 
     security.polkit.extraConfig = ''
       polkit.addRule(function(action, subject) {
-          if (action.id == "org.spice-space.lowlevelusbaccess" && subject.isInGroup("wheel")){
-              return polkit.Result.YES;
-          }
+        if (action.id == "org.spice-space.lowlevelusbaccess" && subject.isInGroup("wheel")){
+          return polkit.Result.YES;
+        }
       });
     '';
 
@@ -197,6 +199,7 @@ in {
       strace
       inetutils
       ethtool
+      usbutils
     ];
 
     environment.variables = {
