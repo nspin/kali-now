@@ -1,9 +1,36 @@
 { lib, config, pkgs, modulesPath, ... }:
 
 let
-  inherit (config.system.build.kaliNow)
-    runtimeDiskPath vmQcow2 networkXml vmXml
-  ;
+  runtimeDiskDirectory = if enablePersistentImage then "/shared/container" else "/home/x";
+
+  runtimeDiskPath = "${runtimeDiskDirectory}/vm.qcow2";
+
+  enablePersistentImage = true;
+  memoryMegabytes = 4096;
+  persistenceSize = "64G";
+
+  vmXmlRaw = ./vm.xml;
+
+  vmXml = pkgs.runCommand "vm.xml" {} ''
+    sed \
+      -e 's,@runtimeDiskPath@,${runtimeDiskPath},' \
+      -e 's,@memoryKilobytes@,${toString (memoryMegabytes * 1024)},' \
+      < ${vmXmlRaw} > $out
+  '';
+
+  networkXml = pkgs.writeText "network.xml" ''
+    <network>
+      <name>kali-network</name>
+      <forward mode='bridge'/>
+      <bridge name='vbr0' />
+    </network>
+  '';
+
+  mkDisk = pkgs.callPackage ./mk-disk.nix {};
+
+  vmQcow2 = mkDisk {
+    inherit persistenceSize;
+  };
 
 in {
   imports = [
@@ -11,6 +38,9 @@ in {
   ];
 
   config = {
+    system.build.kaliNow = {
+      inherit vmXml networkXml vmQcow2;
+    };
 
     system.stateVersion = config.system.nixos.release;
 
