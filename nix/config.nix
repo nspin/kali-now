@@ -66,7 +66,7 @@ in {
 
     # services.udev.enable = lib.mkForce true;
 
-    services.getty.autologinUser = "root";
+    # services.getty.autologinUser = "root";
 
     # NOTE container=docker is for https://systemd.io/CONTAINER_INTERFACE/
 

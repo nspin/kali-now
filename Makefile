@@ -33,7 +33,7 @@ build:
 .PHONY: run
 run: build | $(shared_dir)
 	docker run -it --name $(container_name) \
-		--rm \
+		-d \
 		--privileged \
 		--tmpfs /tmp \
 		--tmpfs /run \
