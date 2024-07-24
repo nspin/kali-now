@@ -43,26 +43,41 @@ in {
     '';
 
     networking.usePredictableInterfaceNames = false;
-#
+
     networking.firewall.enable = false;
 
     # networking.firewall.enable = true;
     # networking.firewall.logRefusedPackets = true;
     # networking.firewall.allowedUDPPorts = [ 53 67 ];
 
-    networking.bridges = {
-      "${bridgeName}" = {
-        interfaces = [
-          "eth0"
-        ];
-        rstp = true;
-      };
-    };
+    # networking.bridges = {
+    #   "${bridgeName}" = {
+    #     interfaces = [
+    #       "eth0"
+    #     ];
+    #   };
+    # };
 
-    networking.interfaces."${bridgeName}".ipv4.addresses = [{
-      address = "192.168.122.1";
-      prefixLength = 24;
-    }];
+    networking.dhcpcd.enable = false;
+
+    networking.interfaces = {
+      eth0 = {
+        useDHCP = false;
+      };
+      "${bridgeName}" = {
+        # networking.interfaces.abc = {
+          useDHCP = false;
+          # useDHCP = true;
+          # useDHCP = null;
+          ipv4.addresses = [
+            {
+              address = "192.168.122.1";
+              prefixLength = 24;
+            }
+          ];
+          # virtual = true;
+        };
+    };
 
     virtualisation.libvirtd.enable = true;
     virtualisation.libvirtd.allowedBridges = [
@@ -94,20 +109,20 @@ in {
       });
     '';
 
-    services.dnsmasq = {
-      enable = true;
-      resolveLocalQueries = false;
-      settings = {
-        interface = bridgeName;
-        dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
-        # dhcp-option = [
-        #   "option:router,192.168.122.1"
-        #   "option:dns-server,192.168.122.1"
-        # ];
-        # log-dhcp = true;
-        # log-queries = true;
-      };
-    };
+    # services.dnsmasq = {
+    #   enable = true;
+    #   resolveLocalQueries = false;
+    #   settings = {
+    #     interface = bridgeName;
+    #     dhcp-range = "192.168.122.2,192.168.122.254,255.255.255.0,96h";
+    #     # dhcp-option = [
+    #     #   "option:router,192.168.122.1"
+    #     #   "option:dns-server,192.168.122.1"
+    #     # ];
+    #     # log-dhcp = true;
+    #     # log-queries = true;
+    #   };
+    # };
 
     # services.dnsmasq = {
     #   enable = true;
