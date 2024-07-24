@@ -21,6 +21,10 @@ none:
 $(shared_dir):
 	mkdir -p $@
 
+.PHONY: rm-shared
+rm-shared:
+	rm -rf $(shared_dir)
+
 .PHONY: build
 build:
 	docker build \

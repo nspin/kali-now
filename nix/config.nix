@@ -50,6 +50,10 @@ in {
     virtualisation.libvirtd.allowedBridges = [
       "vbr0"
     ];
+    virtualisation.libvirtd.qemu.verbatimConfig = ''
+      user = "x"
+      group = "users"
+    '';
 
     virtualisation.spiceUSBRedirection.enable = true;
 
@@ -63,7 +67,7 @@ in {
     users.users.x = {
       uid = 1000;
       isNormalUser = true;
-      extraGroups = [ "wheel" ];
+      extraGroups = [ "wheel" "libvirtd" ];
     };
 
     security.sudo.wheelNeedsPassword = false;
@@ -106,8 +110,26 @@ in {
     #   };
     # };
 
-    system.build.setupVMNetwork = pkgs.writeShellApplication {
-      name = "setup-vm-network";
+    # # TODO doesn't work
+    # networking.localCommands = ''
+    #   ${config.system.build.setupVMNetwork}/bin/*
+    # '';
+
+    systemd.services = {
+      lab-setup-vm-network = {
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        unitConfig.ConditionCapability = "CAP_NET_ADMIN";
+        serviceConfig.Type = "oneshot";
+        serviceConfig.RemainAfterExit = true;
+        script = ''
+          ${config.system.build.lab.setupVMNetwork}/bin/*
+        '';
+      };
+    };
+
+    system.build.lab.setupVMNetwork = pkgs.writeShellApplication {
+      name = "lab-setup-vm-network";
       runtimeInputs = with pkgs; [
         iproute2
         iptables
@@ -123,19 +145,53 @@ in {
       '';
     };
 
-    # TODO doesn't work
-    # networking.localCommands = ''
-    #   ${config.system.build.setupVMNetwork}/bin/*
-    # '';
+    systemd.services = {
+      lab-setup-vm-rest = {
+        after = [ "lab-setup-vm-network.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig.Type = "oneshot";
+        serviceConfig.RemainAfterExit = true;
+        serviceConfig.User = "x";
+        script = ''
+          ${config.system.build.lab.setupVMRest}/bin/*
+        '';
+      };
+    };
+
+    system.build.lab.setupVMRest = pkgs.writeShellApplication {
+      name = "lab-setup-vm-rest";
+      runtimeInputs = with pkgs; [
+        qemu
+        libvirt
+      ];
+      runtimeEnv = {
+        LIBVIRT_DEFAULT_URI = "qemu:///system";
+      };
+      checkPhase = false;
+      text = ''
+        shared_root=/shared
+        shared_dirs="$shared_root/container $shared_root/vm"
+        for d in $shared_dirs; do
+          mkdir -p $d
+        done
+
+        mkdir -p $(dirname ${runtimeDiskPath})
+
+        if [ ! -f ${runtimeDiskPath} ]; then
+          qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=${vmQcow2} ${runtimeDiskPath}
+        fi
+
+        virsh net-define ${networkXml}
+        virsh net-autostart kali-network
+        virsh net-start kali-network
+        virsh define ${vmXml}
+      '';
+    };
 
     environment.systemPackages = with pkgs; [
       xorg.xauth
       qemu
       libvirt
-
-      # utils
-      config.system.build.xsetup
-      config.system.build.xrun
 
       # debugging
       strace
@@ -143,54 +199,13 @@ in {
       ethtool
     ];
 
-    system.build.xsetup = pkgs.writeShellApplication {
-      name = "xsetup";
-      runtimeInputs = with pkgs; [
-        qemu
-        libvirt
-        config.system.build.setupVMNetwork
-      ];
-      checkPhase = false;
-      text = ''
-        sudo ${config.system.build.setupVMNetwork.name}
-
-        ensure_user_dir() {
-          if [ ! -d $1 ]; then
-            sudo mkdir -p $1
-            sudo chown x:x $1
-          fi
-        }
-
-        shared_root=/shared
-        shared_dirs="$shared_root/container $shared_root/vm"
-        for d in $shared_dirs; do
-          ensure_user_dir $d
-        done
-
-        ensure_user_dir $(dirname ${runtimeDiskPath})
-
-        if [ ! -f ${runtimeDiskPath} ]; then
-          qemu-img create -f qcow2 -o backing_fmt=qcow2 -o backing_file=${vmQcow2} ${runtimeDiskPath}
-        fi
-
-        virsh_c() {
-          virsh -c qemu:///session "$@"
-        }
-
-        virsh_c net-define ${networkXml}
-        virsh_c net-autostart kali-network
-        virsh_c net-start kali-network
-        virsh_c define ${vmXml}
-      '';
+    environment.variables = {
+      LIBVIRT_DEFAULT_URI = "qemu:///system";
     };
 
-    system.build.xrun = pkgs.writeShellApplication {
-      name = "xrun";
-      checkPhase = false;
-      text = ''
-        virt-manager -c qemu:///session
-      '';
-    };
+    environment.interactiveShellInit = ''
+      alias v=virt-manager
+    '';
 
   };
 
